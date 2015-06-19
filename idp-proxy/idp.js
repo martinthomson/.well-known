@@ -1,49 +1,64 @@
 (function(g) {
   'use strict';
 
-  // A wrapper for the terrible indexedDB API
-  function DB(name, store) {
-    this.name = name;
-    this.store = store;
-    this._db = this._create();
-  }
-
-  DB.prototype = {
-    _create: function() {
-      var op = indexedDB.open(this.name);
-      op.onupgradeneeded = e => {
-        var db = e.target.result;
-        db.createObjectStore(this.store);
-      };
-      return new Promise(resolve => {
-        op.onsuccess = e => resolve(e.target.result);
-      });
-    },
-
-    _result: function(tx, op) {
-      return new Promise((resolve, reject) => {
-        op.onsuccess = e => resolve(e.target.result);
-        op.onerror = () => reject(op.error);
-        tx.onabort = () => reject(tx.error);
-      });
-    },
-
-    get: function(k) {
-      return this._db.then(db => {
-        var tx = db.transaction(this.store, 'readonly');
-        var store = tx.objectStore(this.store);
-        return this._result(tx, store.get(k));
-      });
-    },
-
-    put: function(k, v) {
-      return this._db.then(db => {
-        var tx = db.transaction(this.store, 'readwrite');
-        var store = tx.objectStore(this.store);
-        return this._result(tx, store.put(v, k));
-      });
+  if (indexedDB) {
+    // A wrapper for the terrible indexedDB API
+    function DB(name, store) {
+      this.name = name;
+      this.store = store;
+      this._db = this._create();
     }
-  };
+
+    DB.prototype = {
+      _create: function() {
+        var op = indexedDB.open(this.name);
+        op.onupgradeneeded = e => {
+          var db = e.target.result;
+          db.createObjectStore(this.store);
+        };
+        return new Promise(resolve => {
+          op.onsuccess = e => resolve(e.target.result);
+        });
+      },
+
+      _result: function(tx, op) {
+        return new Promise((resolve, reject) => {
+          op.onsuccess = e => resolve(e.target.result);
+          op.onerror = () => reject(op.error);
+          tx.onabort = () => reject(tx.error);
+        });
+      },
+
+      get: function(k) {
+        return this._db.then(db => {
+          var tx = db.transaction(this.store, 'readonly');
+          var store = tx.objectStore(this.store);
+          return this._result(tx, store.get(k));
+        });
+      },
+
+      put: function(k, v) {
+        return this._db.then(db => {
+          var tx = db.transaction(this.store, 'readwrite');
+          var store = tx.objectStore(this.store);
+          return this._result(tx, store.put(v, k));
+        });
+      }
+    };
+  } else {
+    function DB() {
+      this.store_ = {}
+    }
+    DB.prototype = {
+      put: function(k, v) {
+        this.store_[k] = v;
+        return Promise.resolve();
+      },
+      get: function(k) {
+        return Promise.resolve(this.store_[k]);
+      }
+    }
+  }
 
   // Base64 URL.  Again.
   var base64 = {
@@ -153,7 +168,7 @@
             throw new Error('Invalid signature on identity assertion');
           }
           return {
-            username: result.id + '@' + idpDetails.domain,
+            identity: result.id + '@' + idpDetails.domain,
             contents: assertion.contents
           };
         });
