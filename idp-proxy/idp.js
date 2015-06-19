@@ -133,7 +133,7 @@
           })
         )
         .then(result => {
-          return {
+          var rval = {
             idp: idpDetails,
             assertion: JSON.stringify({
               contents: contents,
@@ -141,6 +141,8 @@
               signature: base64.encode(result.signature)
             })
           };
+          dump('assertion: ' + JSON.stringify(rval) + '\n');
+          return rval;
         });
     },
 
@@ -166,10 +168,12 @@
           if (!result.ok) {
             throw new Error('Invalid signature on identity assertion');
           }
-          return {
+          var rval = {
             identity: result.id + '@' + idpDetails.domain,
             contents: assertion.contents
           };
+          dump('assertion: ' + JSON.stringify(rval) + '\n');
+          return rval;
         });
     }
   };
