@@ -1,6 +1,4 @@
 (function(g) {
-  'use strict';
-
   // A wrapper for the terrible indexedDB API
   function IndexedDB(name, store) {
     this.name = name;
