@@ -74,7 +74,7 @@ var idp = {
       })
     };
     dump('assertion: ' + JSON.stringify(rval) + '\n');
-    return rval;
+    return Promise.resolve(rval);
   },
 
   validateAssertion: (assertion /*, origin */) => {
@@ -84,7 +84,7 @@ var idp = {
       contents: assertion.contents
     };
     dump('assertion: ' + JSON.stringify(rval) + '\n');
-    return rval;
+    return Promise.resolve(rval);
   }
 };
 
