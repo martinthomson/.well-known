@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript">
+function test() {
+  var b = Date.now();
+  mozRTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
+    .then(c => document.getElementById("result").textContent = Date.now() - b);
+}
+    </script>
+  </head>
+  <body>
+    <button onclick="test()">test</button><span id="result"></span>
+  </body>
+</html>
