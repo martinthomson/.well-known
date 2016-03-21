@@ -89,7 +89,10 @@ var idp = {
 };
 
 if (rtcIdentityProvider) {
-  rtcIdentityProvider.register(idp);
+  rtcIdentityProvider.register({
+    generateAssertion: idp.generateAssertion.bind(idp),
+    validateAssertion: idp.validateAssertion.bind(idp),
+  });
 } else {
   console.warn('IdP not running in the right sandbox');
 }
