@@ -54,7 +54,7 @@ var utf8 = s => new TextEncoder('utf-8').encode(s);
 
 var idp = {
   generateAssertion: (contents /*, origin, hint */) => {
-    dump('generate: ' + contents + '\n');
+    console.log('generate', contents);
     var db = new DB('idpkeystore', 'keys');
     return db.get('keypair')
       .then(
@@ -81,14 +81,17 @@ var idp = {
             signature: base64.encode(signature)
           })
         };
-        dump('assertion: ' + JSON.stringify(rval) + '\n');
+        console.log('assertion', JSON.stringify(rval));
         return rval;
+      }).catch(e => {
+        console.warn('error', e);
+        throw e;
       });
   },
 
   validateAssertion: (assertion /*, origin */) => {
     var assertion = JSON.parse(assertion); // let this throw
-    dump('validate: ' + JSON.stringify(assertion) + '\n');
+    console.log('validate', JSON.stringify(assertion));
     return crypto.subtle.importKey('raw', base64.decode(assertion.pub),
                                    { name: 'ECDSA', namedCurve: 'P-256' },
                                    true, ['verify'])
@@ -113,8 +116,11 @@ var idp = {
           identity: id + '@' + idpDetails.domain,
           contents: assertion.contents
         };
-        dump('validated: ' + JSON.stringify(rval) + '\n');
+        console.log('ok', JSON.stringify(rval));
         return rval;
+      }).catch(e => {
+        console.warn('error', e);
+        throw e;
       });
   }
 };
