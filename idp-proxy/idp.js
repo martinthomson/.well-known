@@ -106,7 +106,7 @@ var idp = {
           // Make the identity a compressed form of the public key.
           crypto.subtle.digest('SHA-256', utf8(assertion.pub))
             .then(raw => base64.encode(raw.slice(0, 12)))
-        })
+        ])
       )
       .then((ok, id) => {
         if (!ok) {
