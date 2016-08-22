@@ -61,7 +61,7 @@ var idpDetails = {
   domain: location.host
 };
 var utf8 = s => new TextEncoder('utf-8').encode(s);
-var input = v => utf8((v.id ? (v.id + '@') : '') + v.contents);
+var input = v => console.log('input', v), utf8((v.id ? (v.id + '@') : '') + v.contents);
 
 var idp = {
   generateAssertion: (contents , origin, hint) => {
@@ -99,7 +99,7 @@ var idp = {
         console.log('assertion', rval);
         return rval;
       }).catch(e => {
-        console.warn('error', e);
+        console.warn('error', e.message, e.stack);
         throw e;
       });
   },
@@ -120,7 +120,7 @@ var idp = {
 
           // Make the identity a compressed form of the public key.
           assertion.id ?
-            assertion.id :
+            Promise.resolve(assertion.id) :
             crypto.subtle.digest('SHA-256', utf8(assertion.pub))
               .then(raw => base64.encode(raw.slice(0, 12)))
         ])
@@ -136,7 +136,7 @@ var idp = {
         console.log('ok', rval);
         return rval;
       }).catch(e => {
-        console.warn('error', e);
+        console.warn('error', e.message, e.stack);
         throw e;
       });
   }
