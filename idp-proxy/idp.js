@@ -45,15 +45,6 @@ var base64 = {
   }
 };
 
-Promise.allmap = o => {
-  var result = {};
-  return Promise.all(
-    Object.keys(o).map(
-      k => Promise.resolve(o[k]).then(r => result[k] = r)
-    )
-  ).then(_ => result);
-};
-
 var path = location.pathname;
 var idpDetails = {
   protocol: path.substring(path.lastIndexOf('/') + 1) + location.hash,
@@ -63,6 +54,7 @@ var utf8 = s => new TextEncoder('utf-8').encode(s);
 
 var idp = {
   generateAssertion: (contents /*, origin, hint */) => {
+    dump('generate: ' + contents + '\n');
     var db = new DB('idpkeystore', 'keys');
     return db.get('keypair')
       .then(
@@ -71,24 +63,22 @@ var idp = {
                                     false, ['sign'])
       )
       .then(
-        pair => Promise.allmap({
+        pair => Promise.all([
           // The identity is the raw public key.
-          pub:
           crypto.subtle.exportKey('raw', pair.publicKey),
 
           // Sign the contents
-          signature:
           crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' },
                              pair.privateKey, utf8(contents))
-        })
+        ])
       )
-      .then(result => {
+      .then((pub, signature) => {
         var rval = {
           idp: idpDetails,
           assertion: JSON.stringify({
             contents: contents,
-            pub: base64.encode(result.pub),
-            signature: base64.encode(result.signature)
+            pub: base64.encode(pub),
+            signature: base64.encode(signature)
           })
         };
         dump('assertion: ' + JSON.stringify(rval) + '\n');
@@ -98,31 +88,32 @@ var idp = {
 
   validateAssertion: (assertion /*, origin */) => {
     var assertion = JSON.parse(assertion); // let this throw
+    dump('validate: ' + JSON.stringify(assertion) + '\n');
     return crypto.subtle.importKey('raw', base64.decode(assertion.pub),
                                    { name: 'ECDSA', namedCurve: 'P-256' },
                                    true, ['verify'])
       .then(
-        pubKey => Promise.allmap({
+        pubKey => Promise.all([
           // Verify the signature
-          ok: crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' },
-                                   pubKey,
-                                   base64.decode(assertion.signature),
-                                   utf8(assertion.contents)),
+          crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' },
+                                 pubKey,
+                                 base64.decode(assertion.signature),
+                                 utf8(assertion.contents)),
 
           // Make the identity a compressed form of the public key.
-          id: crypto.subtle.digest('SHA-256', utf8(assertion.pub))
+          crypto.subtle.digest('SHA-256', utf8(assertion.pub))
             .then(raw => base64.encode(raw.slice(0, 12)))
         })
       )
-      .then(result => {
-        if (!result.ok) {
+      .then((ok, id) => {
+        if (!ok) {
           throw new Error('Invalid signature on identity assertion');
         }
         var rval = {
-          identity: result.id + '@' + idpDetails.domain,
+          identity: id + '@' + idpDetails.domain,
           contents: assertion.contents
         };
-        dump('assertion: ' + JSON.stringify(rval) + '\n');
+        dump('validated: ' + JSON.stringify(rval) + '\n');
         return rval;
       });
   }
