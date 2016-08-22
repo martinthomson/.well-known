@@ -61,7 +61,7 @@ var idpDetails = {
   domain: location.host
 };
 var utf8 = s => new TextEncoder('utf-8').encode(s);
-var input = v => console.log('input', v), utf8((v.id ? (v.id + '@') : '') + v.contents);
+var input = v => { console.log('input', v); utf8((v.id ? (v.id + '@') : '') + v.contents); };
 
 var idp = {
   generateAssertion: (contents , origin, hint) => {
