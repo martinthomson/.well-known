@@ -10,6 +10,16 @@ DB.prototype = {
     return Promise.resolve(this.store_[k]);
   }
 };
+if (!console) {
+  console = {
+    log() {
+      dump(Array.prototype.map.call(arguments, v => JSON.stringify(v)).join(' ') + '\n');
+    },
+    warn() {
+      this.log.apply(this, arguments);
+    }
+  };
+}
 
 // Base64 URL.  Again.
 var base64 = {
