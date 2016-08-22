@@ -11,7 +11,7 @@ DB.prototype = {
   }
 };
 if (!console) {
-  console = {
+  var console = {
     log() {
       dump(Array.prototype.map.call(arguments, v => JSON.stringify(v)).join(' ') + '\n');
     },
