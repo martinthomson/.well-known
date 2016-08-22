@@ -61,10 +61,12 @@ var idpDetails = {
   domain: location.host
 };
 var utf8 = s => new TextEncoder('utf-8').encode(s);
+var input = v => utf8((v.id ? (v.id + '@') : '') + v.contents);
 
 var idp = {
-  generateAssertion: (contents /*, origin, hint */) => {
-    console.log('generate', contents);
+  generateAssertion: (contents , origin, hint) => {
+    console.log('generate', contents, origin, hint);
+    var id = hint ? hint.replace(/@.*$/, '') : undefined;
     var db = new DB('idpkeystore', 'keys');
     return db.get('keypair')
       .then(
@@ -79,19 +81,22 @@ var idp = {
 
           // Sign the contents
           crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' },
-                             pair.privateKey, utf8(contents))
+                             pair.privateKey,
+                             input({ id: id, contents: contents }))
         ])
       )
       .then((pub, signature) => {
+        var k = base64.encode(pub);
         var rval = {
           idp: idpDetails,
           assertion: JSON.stringify({
             contents: contents,
-            pub: base64.encode(pub),
+            id: hint,
+            pub: k,
             signature: base64.encode(signature)
           })
         };
-        console.log('assertion', JSON.stringify(rval));
+        console.log('assertion', rval);
         return rval;
       }).catch(e => {
         console.warn('error', e);
@@ -111,11 +116,13 @@ var idp = {
           crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' },
                                  pubKey,
                                  base64.decode(assertion.signature),
-                                 utf8(assertion.contents)),
+                                 input(assertion)),
 
           // Make the identity a compressed form of the public key.
-          crypto.subtle.digest('SHA-256', utf8(assertion.pub))
-            .then(raw => base64.encode(raw.slice(0, 12)))
+          assertion.id ?
+            assertion.id :
+            crypto.subtle.digest('SHA-256', utf8(assertion.pub))
+              .then(raw => base64.encode(raw.slice(0, 12)))
         ])
       )
       .then((ok, id) => {
@@ -126,7 +133,7 @@ var idp = {
           identity: id + '@' + idpDetails.domain,
           contents: assertion.contents
         };
-        console.log('ok', JSON.stringify(rval));
+        console.log('ok', rval);
         return rval;
       }).catch(e => {
         console.warn('error', e);
