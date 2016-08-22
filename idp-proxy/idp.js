@@ -85,7 +85,7 @@ var idp = {
                              input({ id: id, contents: contents }))
         ])
       )
-      .then((pub, signature) => {
+      .then(([pub, signature]) => {
         var k = base64.encode(pub);
         var rval = {
           idp: idpDetails,
@@ -118,14 +118,14 @@ var idp = {
                                  base64.decode(assertion.signature),
                                  input(assertion)),
 
-          // Make the identity a compressed form of the public key.
+          // The identity is copied, or a compressed form of the pubkey.
           assertion.id ?
             Promise.resolve(assertion.id) :
             crypto.subtle.digest('SHA-256', utf8(assertion.pub))
               .then(raw => base64.encode(raw.slice(0, 12)))
         ])
       )
-      .then((ok, id) => {
+      .then(([ok, id]) => {
         if (!ok) {
           throw new Error('Invalid signature on identity assertion');
         }
