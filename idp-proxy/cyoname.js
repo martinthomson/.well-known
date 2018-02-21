@@ -22,7 +22,7 @@ var idp = {
         contents: contents
       })
     };
-    console.log('assertion: ' + JSON.stringify(rval) + '\n');
+    dump('assertion: ' + JSON.stringify(rval) + '\n');
     return Promise.resolve(rval);
   },
 
@@ -32,7 +32,7 @@ var idp = {
       identity: assertion.name + '@' + idpDetails.domain,
       contents: assertion.contents
     };
-    console.log('assertion: ' + JSON.stringify(rval) + '\n');
+    dump('assertion: ' + JSON.stringify(rval) + '\n');
     return Promise.resolve(rval);
   }
 };
