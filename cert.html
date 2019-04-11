@@ -4,7 +4,7 @@
     <script type="text/javascript">
 function test() {
   var b = Date.now();
-  mozRTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
+  RTCPeerConnection.generateCertificate({ name: 'ECDSA', namedCurve: 'P-256' })
     .then(c => document.getElementById("result").textContent = Date.now() - b);
 }
     </script>
